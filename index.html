@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eiendomsannonse — 9:16 ↔ 4:5 (mm-justert område, animasjoner, uten zoom)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --font-kondo:"Kondo Regular",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      --font-ddc:"Domaine Display Condensed",Georgia,serif;
+      --font-dtl:"Domaine Text Light",Georgia,serif;
+      --font-elp:"Elegant Lux Pro Mager",Georgia,serif;
+    }
+    body{font-family:var(--font-dtl)}
+    .font-domaine-display{font-family:var(--font-ddc)}
+    details>summary{cursor:pointer;padding:.75rem;background:#4a5568;border-radius:.375rem;font-weight:500;transition:.2s}
+    details>summary:hover{background:#718096}
+    details[open]>summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .details-content{padding:1rem;border:1px solid #4a5568;border-top:none;border-bottom-left-radius:.375rem;border-bottom-right-radius:.375rem}
+    .gemini-btn{background:#8B5CF6;padding:.25rem .5rem;font-size:.75rem;border-radius:.375rem}
+    .gemini-btn:hover{background:#7C3AED}
+  </style>
+  <style id="injected-font-css"></style>
+</head>
+<body class="bg-gray-900 text-white">
+  <div class="flex flex-col lg:flex-row min-h-screen">
+    <div class="w-full lg:w-1/3 bg-gray-800 p-6 overflow-y-auto" style="max-height:100vh;">
+      <div class="max-w-md mx-auto">
+        <h2 class="text-3xl font-bold mb-6 text-center text-indigo-400 font-domaine-display">Lag din annonse</h2>
+
+        <details open>
+          <summary>Fonter (integrer lokalt)</summary>
+          <div class="details-content space-y-3 text-sm">
+            <p class="opacity-80">Last opp .otf for Kondo, Domaine Display Condensed, Domaine Text Light, Elegant Lux Pro Mager. De lagres i nettleseren (localStorage) og brukes i forhåndsvisning/eksport.</p>
+            <div class="grid grid-cols-1 gap-3">
+              <label class="block"><span class="block mb-1">Kondo Regular</span><input id="fontKondo" type="file" accept=".otf" class="block w-full text-xs text-gray-300"/></label>
+              <label class="block"><span class="block mb-1">Domaine Display Condensed</span><input id="fontDDC" type="file" accept=".otf" class="block w-full text-xs text-gray-300"/></label>
+              <label class="block"><span class="block mb-1">Domaine Text Light</span><input id="fontDTL" type="file" accept=".otf" class="block w-full text-xs text-gray-300"/></label>
+              <label class="block"><span class="block mb-1">Elegant Lux Pro Mager</span><input id="fontELP" type="file" accept=".otf" class="block w-full text-xs text-gray-300"/></label>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="saveFontsBtn" class="gemini-btn">💾 Lagre & aktiver</button>
+              <button id="clearFontsBtn" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs">🧹 Nullstill</button>
+              <span id="fontStatus" class="text-xs opacity-80"></span>
+            </div>
+            <div class="text-xs opacity-80">
+              <div id="fs-kondo">Kondo Regular: <span class="opacity-70">venter…</span></div>
+              <div id="fs-ddc">Domaine Display Condensed: <span class="opacity-70">venter…</span></div>
+              <div id="fs-dtl">Domaine Text Light: <span class="opacity-70">venter…</span></div>
+              <div id="fs-elp">Elegant Lux Pro Mager: <span class="opacity-70">venter…</span></div>
+            </div>
+          </div>
+        </details>
+
+        <form id="adForm" class="space-y-4 mt-6">
+          <details open>
+            <summary>Tema og Adresse</summary>
+            <div class="details-content space-y-4">
+              <div>
+                <label class="block text-sm">Tema</label>
+                <select id="theme" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2" disabled>
+                  <option value="magasin">Magasin</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="col-span-2">
+                  <label class="block text-sm">Gatenavn</label>
+                  <input id="addressStreet" value="Melkeveien" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"/>
+                </div>
+                <div>
+                  <label class="block text-sm">Nr.</label>
+                  <input id="addressNumber" value="7A" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"/>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Beskrivelse</summary>
+            <div class="details-content space-y-4">
+              <div>
+                <label class="block text-sm">Tittel</label>
+                <input id="title" value="Arkitekttegnet villa med påkostet standard" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"/>
+              </div>
+              <div>
+                <label class="block text-sm">Område / Sted</label>
+                <input id="location" value="Vettakollen" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"/>
+              </div>
+              <div>
+                <label class="block text-sm">Kort beskrivelse</label>
+                <textarea id="description" rows="3" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2">og nydelig utsikt - Flott hage og fine uteplasser - Utleiedel - Garasje</textarea>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>Eiendomsdetaljer</summary>
+            <div class="details-content grid grid-cols-2 gap-4">
+              <div><label class="block text-sm">Areal (m²)</label><input id="area" type="number" value="404" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"></div>
+              <div><label class="block text-sm">Byggeår</label><input id="year" type="number" value="1958" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"></div>
+              <div><label class="block text-sm">Soverom</label><input id="bedrooms" type="number" value="5" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"></div>
+              <div><label class="block text-sm">Bad</label><input id="bathrooms" type="number" value="3" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2"></div>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Media (bilder / logo / lyd)</summary>
+            <div class="details-content space-y-4">
+              <div><label class="block text-sm">Bilder</label><input id="images" type="file" multiple accept="image/*" class="mt-1 w-full text-sm text-gray-300"></div>
+              <div><label class="block text-sm">Logo</label><input id="logo" type="file" accept="image/*" class="mt-1 w-full text-sm text-gray-300"></div>
+              <div><label class="block text-sm">Bakgrunnsmusikk</label><input id="backgroundMusic" type="file" accept="audio/*" class="mt-1 w-full text-sm text-gray-300"><p class="text-xs opacity-70 mt-1">Merk: Lyd legges ikke inn i .webm-filen.</p></div>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Format & Eksport</summary>
+            <div class="details-content space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm">Oppløsning</label>
+                  <select id="resolution" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2">
+                    <option value="720">720p</option>
+                    <option value="1080" selected>1080p</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm">Format</label>
+                  <select id="aspect" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2">
+                    <option value="9:16" selected>9:16 (vertikal)</option>
+                    <option value="4:5">4:5 (croppes fra 9:16)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm">Kompakt 4:5</label>
+                  <input id="compact45" type="range" min="0" max="100" value="50" class="w-full">
+                  <p class="text-xs opacity-70 mt-1">Dra mot høyre for tettere layout i 4:5.</p>
+                </div>
+                <div class="flex items-end">
+                  <label class="inline-flex items-center gap-2">
+                    <input id="safe45" type="checkbox" class="accent-indigo-500" checked>
+                    <span class="text-sm">Vis 4:5-ramme i 9:16</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm">Varighet (sek)</label>
+                <input id="duration" type="number" value="20" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2">
+              </div>
+
+              <div>
+                <label class="block text sm">Prisantydning</label>
+                <input id="price" value="33 500 000,-" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2">
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm">Visning 1</label>
+                  <input id="viewing1" value="Kontakt megler for visning" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2">
+                </div>
+                <div>
+                  <label class="block text-sm">Visning 2</label>
+                  <input id="viewing2" placeholder="La stå tomt for én visning" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md p-2">
+                </div>
+              </div>
+            </div>
+          </details>
+        </form>
+      </div>
+    </div>
+
+    <div class="w-full lg:w-2/3 flex flex-col items-center justify-center p-6 bg-gray-900">
+      <h2 class="text-2xl font-bold mb-4">Forhåndsvisning</h2>
+      <div id="canvas-container" class="bg-black rounded-lg shadow-2xl overflow-hidden" style="width:360px; height:640px; transition: width 0.4s ease, height 0.4s ease;">
+        <canvas id="previewCanvas" style="width:100%; height:100%;"></canvas>
+      </div>
+      <div id="status" class="mt-4 text-center text-gray-400 h-6"></div>
+      <div class="flex space-x-4 mt-4">
+        <button id="previewBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Forhåndsvisning</button>
+        <button id="generateBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Generer Video</button>
+        <a id="downloadLink" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Last ned video</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== Fonter via localStorage ===== */
+    const FONT_KEYS={k:'font_kondo',d:'font_ddc',t:'font_dtl',e:'font_elp'};
+    const injected=document.getElementById('injected-font-css');
+
+    const fontKondoInput = document.getElementById('fontKondo');
+    const fontDDCInput   = document.getElementById('fontDDC');
+    const fontDTLInput   = document.getElementById('fontDTL');
+    const fontELPInput   = document.getElementById('fontELP');
+
+    function b64FromFile(f){
+      return new Promise((res,rej)=>{
+        const r=new FileReader();
+        r.onload=()=>res(r.result.split(',')[1]);
+        r.onerror=()=>rej(r.error);
+        r.readAsDataURL(f);
+      });
+    }
+    function injectFonts(){
+      const k=localStorage.getItem(FONT_KEYS.k),d=localStorage.getItem(FONT_KEYS.d),t=localStorage.getItem(FONT_KEYS.t),e=localStorage.getItem(FONT_KEYS.e);
+      let css='';
+      if(k) css+=`@font-face{font-family:'Kondo Regular';src:url(data:font/otf;base64,${k}) format('opentype');font-weight:400;font-style:normal;font-display:block}`;
+      if(d) css+=`@font-face{font-family:'Domaine Display Condensed';src:url(data:font/otf;base64,${d}) format('opentype');font-weight:400;font-style:normal;font-display:block}`;
+      if(t) css+=`@font-face{font-family:'Domaine Text Light';src:url(data:font/otf;base64,${t}) format('opentype');font-weight:400;font-style:normal;font-display:block}`;
+      if(e) css+=`@font-face{font-family:'Elegant Lux Pro Mager';src:url(data:font/otf;base64,${e}) format('opentype');font-weight:400;font-style:normal;font-display:block}`;
+      injected.textContent=css;
+    }
+    async function waitFonts(){
+      const tests=['400 40px "Kondo Regular"','400 40px "Domaine Display Condensed"','400 30px "Domaine Text Light"','400 30px "Elegant Lux Pro Mager"'];
+      try{await Promise.all(tests.map(t=>document.fonts.load(t,'TEST')));await document.fonts.ready;}catch(_){}
+      const ok=id=>{const el=document.getElementById(id); if(el) el.innerHTML=el.innerHTML.replace(/venter…|mangler/i,'<span class="text-green-400">OK</span>');};
+      if(document.fonts.check('400 16px "Kondo Regular"')) ok('fs-kondo');
+      if(document.fonts.check('400 16px "Domaine Display Condensed"')) ok('fs-ddc');
+      if(document.fonts.check('400 16px "Domaine Text Light"')) ok('fs-dtl');
+      if(document.fonts.check('400 16px "Elegant Lux Pro Mager"')) ok('fs-elp');
+    }
+    document.getElementById('saveFontsBtn').onclick=async(e)=>{
+      e.preventDefault();
+      const fK=fontKondoInput.files[0], fD=fontDDCInput.files[0], fT=fontDTLInput.files[0], fE=fontELPInput.files[0];
+      if(fK) localStorage.setItem(FONT_KEYS.k, await b64FromFile(fK));
+      if(fD) localStorage.setItem(FONT_KEYS.d, await b64FromFile(fD));
+      if(fT) localStorage.setItem(FONT_KEYS.t, await b64FromFile(fT));
+      if(fE) localStorage.setItem(FONT_KEYS.e, await b64FromFile(fE));
+      injectFonts(); await waitFonts();
+      document.getElementById('fontStatus').textContent='Fonter er lagret og aktivert.';
+    };
+    document.getElementById('clearFontsBtn').onclick=(e)=>{
+      e.preventDefault();
+      Object.values(FONT_KEYS).forEach(k=>localStorage.removeItem(k));
+      injected.textContent='';
+      document.getElementById('fs-kondo').innerHTML='Kondo Regular: <span class="opacity-70">mangler</span>';
+      document.getElementById('fs-ddc').innerHTML='Domaine Display Condensed: <span class="opacity-70">mangler</span>';
+      document.getElementById('fs-dtl').innerHTML='Domaine Text Light: <span class="opacity-70">mangler</span>';
+      document.getElementById('fs-elp').innerHTML='Elegant Lux Pro Mager: <span class="opacity-70">mangler</span>';
+    };
+    injectFonts();
+
+    /* ===== Kjerne (base 9:16 + cropping) ===== */
+    const BASE_W=720, BASE_H=1280;
+    const baseCanvas=document.createElement('canvas'); baseCanvas.width=BASE_W; baseCanvas.height=BASE_H;
+    const btx=baseCanvas.getContext('2d'); btx.imageSmoothingEnabled=true; btx.imageSmoothingQuality='high';
+
+    const previewCanvas=document.getElementById('previewCanvas');
+    const ptx=previewCanvas.getContext('2d'); ptx.imageSmoothingEnabled=true; ptx.imageSmoothingQuality='high';
+    const canvasContainer = document.getElementById('canvas-container');
+
+    const form=document.getElementById('adForm');
+    const statusEl=document.getElementById('status');
+    const previewBtn=document.getElementById('previewBtn');
+    const generateBtn=document.getElementById('generateBtn');
+    const downloadLink=document.getElementById('downloadLink');
+
+    const imagesInput = document.getElementById('images');
+    const logoInput = document.getElementById('logo');
+    const musicInput = document.getElementById('backgroundMusic');
+
+    let adData={}, loadedImages=[], loadedLogo=null, audio=new Audio(), musicUrl=null;
+    let mediaRecorder, recordedChunks=[], isGenerating=false;
+    let currentImageIndex=0,lastFrameTime=0,timeSinceLastSwitch=0,isPlaying=false;
+    let SLIDE_DURATION=4000,TOTAL_DURATION=20000,totalElapsedTime=0;
+    const FADE_DURATION=500;
+
+    const getVal=id=>document.getElementById(id).value;
+
+    function updatePreviewContainerSize() {
+      const aspect = getVal('aspect');
+      const baseWidth = 360;
+      let newHeight;
+      if (aspect === '4:5') newHeight = baseWidth * (5/4);
+      else newHeight = baseWidth * (16/9);
+      canvasContainer.style.width = `${baseWidth}px`;
+      canvasContainer.style.height = `${Math.round(newHeight)}px`;
+    }
+
+    function updateAdData(){
+      adData={
+        addressStreet:getVal('addressStreet'), addressNumber:getVal('addressNumber'),
+        title:getVal('title'), location:getVal('location'), description:getVal('description'),
+        area:getVal('area'), year:getVal('year'), bedrooms:getVal('bedrooms'), bathrooms:getVal('bathrooms'),
+        price:getVal('price'), viewing1:getVal('viewing1'), viewing2:getVal('viewing2'),
+        resolution:getVal('resolution'), aspect:getVal('aspect'), duration:+getVal('duration')||20,
+        compact45: Math.max(0, Math.min(1, (parseFloat(getVal('compact45'))||0)/100 )),
+        safe45: document.getElementById('safe45').checked
+      };
+      TOTAL_DURATION=adData.duration*1000;
+      SLIDE_DURATION = loadedImages.length ? TOTAL_DURATION/loadedImages.length : 4000;
+      updatePreviewContainerSize();
+    }
+    form.addEventListener('input', updateAdData);
+
+    (function loadInitial(){
+      const urls=[
+        'https://placehold.co/1280x720/2d3748/ffffff?text=Bilde+1+(bredt)',
+        'https://placehold.co/720x1280/4a5568/ffffff?text=Bilde+2+(høyt)',
+        'https://placehold.co/1280x720/718096/ffffff?text=Bilde+3+(bredt)',
+        'https://placehold.co/720x1280/1a202c/ffffff?text=Bilde+4+(høyt)',
+      ];
+      urls.forEach(u=>{const im=new Image(); im.crossOrigin='anonymous'; im.src=u; im.onload=()=>loadedImages.push(im);});
+      const c=document.createElement('canvas'); c.width=100;c.height=100; const x=c.getContext('2d');
+      x.fillStyle='#b3925d'; x.strokeStyle='white'; x.lineWidth=5; x.strokeRect(0,0,100,100);
+      x.fillStyle='white'; x.font='400 70px "Domaine Display Condensed", Georgia, serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('P',50,55);
+      const lg=new Image(); lg.src=c.toDataURL(); lg.onload=()=>loadedLogo=lg;
+    })();
+
+    imagesInput.onchange=(e)=>{
+      loadedImages=[];
+      [...e.target.files].forEach(f=>{
+        const r=new FileReader();
+        r.onload=ev=>{
+          const im=new Image();
+          im.onload=()=>loadedImages.push(im);
+          im.src=ev.target.result;
+        };
+        r.readAsDataURL(f);
+      });
+    };
+    logoInput.onchange=(e)=>{
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=ev=>{
+        const im=new Image();
+        im.onload=()=>loadedLogo=im;
+        im.src=ev.target.result;
+      };
+      r.readAsDataURL(f);
+    };
+    musicInput.onchange=(e)=>{
+      const f=e.target.files[0]; if(!f) return;
+      if(musicUrl) URL.revokeObjectURL(musicUrl);
+      musicUrl=URL.createObjectURL(f); audio.src=musicUrl;
+    };
+
+    /* === HJELPERE (mm → px) === */
+    const mmToPx = mm => Math.round(mm * 96 / 25.4); // 1in=25.4mm, 96dpi
+    // Område-forskyvning:
+    const EXTRA_LOC_9_16_PX = mmToPx(20);   // 20 mm ned i 9:16
+    const EXTRA_LOC_4_5_PX  = -mmToPx(20);  // ≈30 mm opp fra tidligere (+10 → −20)
+    // Ekstra luft i 4:5 info-delen under adresse:
+    const EXTRA_INFO_BELOW_NUMBER_4_5 = mmToPx(2); // +2 mm
+    const EXTRA_LABEL_VALUE_GAP_4_5   = mmToPx(1); // +1 mm
+
+    function ease(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+    function drawImageCover(ctx,img,W,H){
+      if (!img || !img.complete || img.naturalHeight === 0) return;
+      const ca=W/H, ia=img.width/img.height; let sx,sy,sw,sh;
+      if(ia>ca){ sh=img.height; sw=sh*ca; sx=(img.width-sw)/2; sy=0; }
+      else { sw=img.width; sh=sw/ca; sx=0; sy=(img.height-sh)/2; }
+      ctx.drawImage(img,sx,sy,sw,sh, 0,0, W,H);
+    }
+    function text(ctx,t,x,y,f,c,a='left'){ctx.font=f;ctx.fillStyle=c;ctx.textAlign=a;ctx.fillText(t,x,y);}
+    function strokeText(ctx,t,x,y,f,c,a='left'){ctx.font=f;ctx.strokeStyle=c;ctx.lineWidth=2;ctx.textAlign=a;ctx.strokeText(t,x,y);}
+    function wrap(ctx,t,x,y,maxW,lh,f,c,a='left'){
+      ctx.font=f;ctx.fillStyle=c;ctx.textAlign=a;
+      const words=(t||'').split(' ');let line='';const lines=[];
+      for(let i=0;i<words.length;i++){
+        const test=line+words[i]+' ';
+        if(ctx.measureText(test).width>maxW && i>0){lines.push(line.trim());line=words[i]+' ';}
+        else{line=test;}
+      }
+      lines.push(line.trim());
+      lines.forEach((L,i)=>ctx.fillText(L,x,y+i*lh));
+    }
+    function fit(ctx,t,fam,wt,maxW){
+      let s=200; while(s>10){ctx.font=`${wt} ${s}px "${fam}"`; if(ctx.measureText(t).width<maxW) return s; s-=2;} return 10;
+    }
+
+    /* ========= LAYOUT ========= */
+    function layoutForAspect(aspect){
+      if(aspect==='9:16'){
+        return { mode:'tall', downsize:1.00, spacingScale:1.00 };
+      }
+      // 4:5 — styres av slideren
+      const c = adData.compact45 || 0;   // 0..1
+      const downsize    = 0.90 - 0.08*c; // 0.90 → 0.82
+      const spacingScale= 0.70 - 0.16*c; // 0.70 → 0.54
+      return { mode:'safe45', downsize, spacingScale };
+    }
+
+    function drawContent(ctx,t){
+      const a=adData.aspect||'9:16';
+      const L=layoutForAspect(a);
+      const marginX=60, cx=BASE_W/2, rx=BASE_W-marginX;
+      const colStreet='#EDBDF2', colNum='#EDBDF2', colPrice='#EDBDF2', colSmall='#E5E3E4';
+
+      // Keyframes for tekst-animasjon
+      const priceS=1000,priceE=6000,viewS=8000,viewE=13000; 
+      let active=null;
+      if(t>priceS&&t<priceE) active='price'; else if(t>viewS&&t<viewE) active='viewing';
+      const durPrice=priceE-priceS, durView=viewE-viewS;
+
+      const LABEL='Elegant Lux Pro Mager', VALUE='Domaine Display Condensed', BODY='Domaine Text Light';
+
+      if(L.mode==='tall'){
+        /* ========== 9:16 (område 20mm ned) ========== */
+        ctx.textBaseline='top';
+        const streetSize = Math.max(12, Math.floor(fit(ctx, adData.addressStreet, 'Kondo Regular', '400', BASE_W-40) * L.downsize));
+        const streetFont = `400 ${streetSize}px "Kondo Regular"`;
+        const addrY = 80;
+        text(ctx, adData.addressStreet, cx, addrY, streetFont, colStreet,'center');
+
+        const numberSize = Math.max(40, Math.round(130 * L.downsize));
+        const numY = addrY + (streetSize*0.9 + 10);
+        strokeText(ctx, adData.addressNumber, cx, numY, `400 ${numberSize}px "Kondo Regular"`, colNum,'center');
+
+        ctx.font=streetFont;
+        const streetW=ctx.measureText(adData.addressStreet).width, sx=cx-streetW/2, ex=cx+streetW/2;
+        const detailsY = numY + 30;
+        ctx.textBaseline='alphabetic';
+        const labelSize = Math.round(24 * L.downsize), valueSize = Math.round(26 * L.downsize);
+        const labelFont = `400 ${labelSize}px "${LABEL}"`;
+        const valueFont = `400 ${valueSize}px "${VALUE}"`;
+        const valOffset = 30 * L.downsize;
+
+        text(ctx,'Areal', sx, detailsY, labelFont, colSmall,'left');
+        text(ctx, `${adData.area} m²`, sx, detailsY+valOffset, valueFont, colSmall,'left');
+
+        ctx.font=valueFont;
+        const arealValW=ctx.measureText(`${adData.area} m²`).width;
+        const bx=sx+arealValW+40;
+        text(ctx,'Byggeår', bx, detailsY, labelFont, colSmall,'left');
+        text(ctx, adData.year, bx, detailsY+valOffset, valueFont, colSmall,'left');
+
+        const badX=ex;
+        text(ctx,'Bad', badX, detailsY, labelFont, colSmall,'right');
+        text(ctx, adData.bathrooms, badX, detailsY+valOffset, valueFont, colSmall,'right');
+
+        const badValW=ctx.measureText(String(adData.bathrooms)).width;
+        const sv=badX-badValW-40;
+        text(ctx,'Soverom', sv, detailsY, labelFont, colSmall,'right');
+        text(ctx, adData.bedrooms, sv, detailsY+valOffset, valueFont, colSmall,'right');
+
+        // Område (20 mm ned fra toppen) og sikker avstand til visning
+        const visY9_base = BASE_H - 620;    // flyttet opp for mer buffer
+        const priceY9_base = BASE_H - 340;  // litt ned for buffer
+        const minGapToViewing9 = 160;
+
+        let locY = Math.max(detailsY + 120, 360) + EXTRA_LOC_9_16_PX;
+        locY = Math.min(locY, visY9_base - minGapToViewing9);
+
+        const locSize = Math.round(70 * L.downsize);
+        text(ctx, adData.location, marginX, locY, `italic 700 ${locSize}px "Snell Roundhand","Dancing Script",cursive`, colSmall,'left');
+
+        const bodySize = Math.round(28 * L.downsize);
+        wrap(ctx, adData.description, marginX, locY + 45*L.downsize, 450, 40*L.downsize, `400 ${bodySize}px "${BODY}"`, colSmall,'left');
+
+        // Logo
+        const logoH = Math.round(80 * L.downsize);
+        const logoY = BASE_H - 40 - logoH;
+        if(loadedLogo){
+          const logoW = Math.round((loadedLogo.width/loadedLogo.height) * logoH);
+          ctx.drawImage(loadedLogo, cx - logoW/2, logoY, logoW, logoH);
+        }
+
+        // --- Visning og Pris: alltid synlige, uten overlapp ---
+        const visHead9 = Math.round(70 * L.downsize), visBody9 = Math.round(28 * L.downsize);
+        const priceLabel9 = Math.round(32 * L.downsize), priceValue9 = Math.round(60 * L.downsize);
+
+        // Grunnplassering
+        let visX = (BASE_W - 60), priceX = marginX;
+        let visY = visY9_base,    priceY = priceY9_base;
+
+        // Aktivitetsgrad (0..1)
+        const SCALE_BOOST = 0.22;   // mild “pop”
+        const MIN_GAP_9   = 160;    // min avstand
+        const SHIFT_MAX   = 120;    // maks dytt
+
+        let priceEp = 0, viewEp = 0;
+        if (t>priceS && t<priceE) {
+          const ph=t-priceS, inD=durPrice*0.4, outS=durPrice*0.6;
+          priceEp = ph<inD ? ease(ph/inD) : (ph>outS ? 1-ease((ph-outS)/(durPrice-outS)) : 1);
+        }
+        if (t>viewS && t<viewE) {
+          const ph=t-viewS, inD=durView*0.4, outS=durView*0.6;
+          viewEp = ph<inD ? ease(ph/inD) : (ph>outS ? 1-ease((ph-outS)/(durView-outS)) : 1);
+        }
+
+        // Animasjonsforskyvning + skalering (begge vises alltid)
+        let visScale = 1, priceScale = 1;
+        if (viewEp  > 0) { visX   -= 40*viewEp;  visScale   = 1 + SCALE_BOOST*viewEp; }
+        if (priceEp > 0) { priceX += 40*priceEp; priceScale = 1 + SCALE_BOOST*priceEp; }
+
+        // Estimer høyder for kollisjonssjekk
+        const visH   = (visHead9 + 80 * L.downsize) * visScale;                      // tittel + 2 linjer
+        const priceH = (priceLabel9 + 55 * L.downsize + priceValue9*0.85) * priceScale;
+
+        // Unngå overlapp: dytte hver sin vei
+        const safeBottom = loadedLogo ? (BASE_H - 40 - logoH) : BASE_H;
+        let overlap = (visY + visH + MIN_GAP_9) - priceY;
+        if (overlap > 0) {
+          if (priceEp >= viewEp) {
+            // dytt PRIS ned, men ikke inn i logo
+            priceY = Math.min(priceY + Math.min(overlap, SHIFT_MAX), safeBottom - priceH - 24);
+          } else {
+            // dytt VISNING opp, men hold luft mot område/tekst
+            const minVisTop = (detailsY + 120) + EXTRA_LOC_9_16_PX + 160;
+            visY = Math.max(visY - Math.min(overlap, SHIFT_MAX), minVisTop);
+          }
+        }
+
+        // Tegn VISNING (alltid synlig)
+        ctx.save();
+        ctx.translate(visX, visY);
+        ctx.scale(visScale, visScale);
+        text(ctx,'Visning',0,0,`400 ${visHead9}px "Kondo Regular"`, colSmall,'right');
+        text(ctx, adData.viewing1,0,40*L.downsize,`400 ${visBody9}px "Elegant Lux Pro Mager"`, colSmall,'right');
+        if (adData.viewing2) text(ctx, adData.viewing2,0,80*L.downsize,`400 ${visBody9}px "Elegant Lux Pro Mager"`, colSmall,'right');
+        ctx.restore();
+
+        // Tegn PRIS (alltid synlig)
+        ctx.save();
+        ctx.translate(priceX, priceY);
+        ctx.scale(priceScale, priceScale);
+        text(ctx,'Prisantydning',0,0,`400 ${priceLabel9}px "Domaine Display Condensed"`, colSmall,'left');
+        text(ctx, adData.price,0,55*L.downsize,`700 ${priceValue9}px "Domaine Display Condensed"`, colPrice,'left');
+        ctx.restore();
+
+        return; // Viktig: avslutt 9:16-grenen
+      }
+
+      /* ========== 4:5 (ALT inni croppens TOP..BOTTOM) ========== */
+      const { sy, sh } = cropRectForAspect('4:5');
+      const PAD_TOP = 24, PAD_BOTTOM = 24;
+      const TOP    = sy + PAD_TOP;
+      const BOTTOM = sy + sh - PAD_BOTTOM;
+
+      const down = L.downsize, sp = L.spacingScale;
+
+      // Adresse + nummer
+      ctx.textBaseline='top';
+      const streetSize = Math.max(12, Math.floor(fit(ctx, adData.addressStreet, 'Kondo Regular', '400', BASE_W-40) * down));
+      const streetFont = `400 ${streetSize}px "Kondo Regular"`;
+      const addrY = TOP;
+      text(ctx, adData.addressStreet, cx, addrY, streetFont, colStreet,'center');
+
+      const numberSize = Math.max(34, Math.round(110 * down));
+      const numY = addrY + Math.ceil(streetSize*0.70) + 6;
+      strokeText(ctx, adData.addressNumber, cx, numY, `400 ${numberSize}px "Kondo Regular"`, colNum,'center');
+
+      // Info-rad – litt mer luft (+2mm og +1mm)
+      ctx.font=streetFont;
+      const streetW=ctx.measureText(adData.addressStreet).width, sx=cx-streetW/2, ex=cx+streetW/2;
+
+      const labelSize = Math.round(20 * down), valueSize = Math.round(24 * down);
+      const labelFont = `400 ${labelSize}px "${LABEL}"`;
+      const valueFont = `400 ${valueSize}px "${VALUE}"`;
+
+      const GAP_INFO  = Math.max(14, 18*sp) + EXTRA_INFO_BELOW_NUMBER_4_5;
+      const valOffset = (Math.max(18, 22*sp) * down) + EXTRA_LABEL_VALUE_GAP_4_5;
+
+      const detailsY = numY + GAP_INFO;
+      ctx.textBaseline='alphabetic';
+      text(ctx,'Areal', sx, detailsY, labelFont, colSmall,'left');
+      text(ctx, `${adData.area} m²`, sx, detailsY+valOffset, valueFont, colSmall,'left');
+
+      ctx.font=valueFont;
+      const arealValW=ctx.measureText(`${adData.area} m²`).width;
+      const bx=sx+arealValW+22;
+      text(ctx,'Byggeår', bx, detailsY, labelFont, colSmall,'left');
+      text(ctx, adData.year, bx, detailsY+valOffset, valueFont, colSmall,'left');
+
+      const badX=ex;
+      text(ctx,'Bad', badX, detailsY, labelFont, colSmall,'right');
+      text(ctx, adData.bathrooms, badX, detailsY+valOffset, valueFont, colSmall,'right');
+
+      const badValW=ctx.measureText(String(adData.bathrooms)).width;
+      const sv=badX-badValW-22;
+      text(ctx,'Soverom', sv, detailsY, labelFont, colSmall,'right');
+      text(ctx, adData.bedrooms, sv, detailsY+valOffset, valueFont, colSmall,'right');
+
+      const detailsBottom = detailsY + valOffset + valueSize*0.9;
+
+      // NEDRE blokker forankres fra BOTTOM
+      const logoH = Math.round(76 * down);
+      const logoY = BOTTOM - logoH;
+      if(loadedLogo){
+        const logoW = Math.round((loadedLogo.width/loadedLogo.height) * logoH);
+        ctx.drawImage(loadedLogo, cx - logoW/2, logoY, logoW, logoH);
+      }
+
+      // Pris-blokk (rett over logo)
+      const priceLabel = Math.round(30 * down), priceValue = Math.round(56 * down);
+      const priceGap   = Math.round(6 + 42 * down);
+      const priceBlockH = priceLabel + priceGap;
+      const priceY = Math.min(BOTTOM - logoH - 14 - priceBlockH, BOTTOM - 120);
+
+      // Visning-blokk (over pris)
+      const visHead = Math.round(64 * down), visBody = Math.round(26 * down);
+      const viewingY = Math.max(priceY - (visHead + 72*down), sy + 520*sp);
+
+      // Område – løftet ~30 mm + justerte marginer (trygge verdier)
+      const locGapTop = Math.max(20, 28*sp);
+      const targetGapBelowVis = Math.round(220 * down);
+      const minGapToViewing45 = Math.round(120 * down);
+
+      let locY = Math.max(detailsBottom + locGapTop, viewingY - targetGapBelowVis) + EXTRA_LOC_4_5_PX;
+      locY = Math.min(locY, viewingY - minGapToViewing45);
+
+      const locSize = Math.round(58 * down);
+      text(ctx, adData.location, marginX, locY, `italic 700 ${locSize}px "Snell Roundhand","Dancing Script",cursive`, colSmall,'left');
+
+      const bodyTop = locY + Math.max(24, 30*sp);
+      const bodySize = Math.round(24 * down);
+      const bodyLH   = Math.max(28, 32 * sp) * down;
+      const bodyMaxH = Math.max(60, (viewingY - 18) - bodyTop);
+      (function wrapClamp(){
+        ctx.font = `400 ${bodySize}px "${BODY}"`;
+        ctx.fillStyle = colSmall;
+        ctx.textAlign = 'left';
+        const words=(adData.description||'').split(' ');
+        let line='', y=bodyTop, lines=0, maxLines=Math.max(1, Math.floor(bodyMaxH/bodyLH));
+        for(let i=0;i<words.length;i++){
+          const test=line+words[i]+' ';
+          if(ctx.measureText(test).width>450 && i>0){
+            ctx.fillText(line.trim(), marginX, y);
+            lines++; y+=bodyLH; if(lines>=maxLines) return;
+            line=words[i]+' ';
+          }else{ line=test; }
+        }
+        if(lines<maxLines) ctx.fillText(line.trim(), marginX, y);
+      })();
+
+      // TEKST-ANIMASJONER i 4:5 (uendret logikk)
+      if(active!=='viewing'){
+        text(ctx,'Visning', rx, viewingY, `400 ${visHead}px "Kondo Regular"`, colSmall,'right');
+        text(ctx, adData.viewing1, rx, viewingY + 32*down, `400 ${visBody}px "Elegant Lux Pro Mager"`, colSmall,'right');
+        if(adData.viewing2) text(ctx, adData.viewing2, rx, viewingY + 64*down, `400 ${visBody}px "Elegant Lux Pro Mager"`, colSmall,'right');
+      } else {
+        const ph=t-viewS, inD=durView*0.4, outS=durView*0.6;
+        let ep=0; if(ph<inD) ep=ease(ph/inD); else if(ph>outS) ep=1-ease((ph-outS)/(durView-outS)); else ep=1;
+        const x = (BASE_W-60) - (40*ep), sc=1+(0.45*ep);
+        ctx.save(); ctx.translate(x, viewingY); ctx.scale(sc,sc);
+        text(ctx,'Visning',0,0,`400 ${visHead}px "Kondo Regular"`, '#E5E3E4','right');
+        text(ctx, adData.viewing1,0,32*down,`400 ${visBody}px "Elegant Lux Pro Mager"`, '#E5E3E4','right');
+        if(adData.viewing2) text(ctx, adData.viewing2,0,64*down,`400 ${visBody}px "Elegant Lux Pro Mager"`, '#E5E3E4','right');
+        ctx.restore();
+      }
+
+      if(active!=='price'){
+        text(ctx,'Prisantydning', marginX, priceY, `400 ${priceLabel}px "Domaine Display Condensed"`, colSmall,'left');
+        text(ctx, adData.price,    marginX, priceY + (priceGap), `700 ${priceValue}px "Domaine Display Condensed"`, colPrice,'left');
+      } else {
+        const ph=t-priceS, inD=durPrice*0.4, outS=durPrice*0.6;
+        let ep=0; if(ph<inD) ep=ease(ph/inD); else if(ph>outS) ep=1-ease((ph-outS)/(durPrice-outS)); else ep=1;
+        const x=marginX+(40*ep), sc=1+(0.45*ep);
+        ctx.save(); ctx.translate(x, priceY); ctx.scale(sc,sc);
+        text(ctx,'Prisantydning',0,0,`400 ${priceLabel}px "Domaine Display Condensed"`, '#E5E3E4','left');
+        text(ctx, adData.price,0,(priceGap),`700 ${priceValue}px "Domaine Display Condensed"`, '#EDBDF2','left');
+        ctx.restore();
+      }
+    }
+
+    // Tegn baseframe + innhold + evt. sikker ramme (UTEN zoom)
+    function drawBaseFrame(){
+      btx.setTransform(1,0,0,1,0,0);
+      btx.clearRect(0,0,BASE_W,BASE_H);
+
+      const outroStart = TOTAL_DURATION * 0.8;
+      const outroDur   = TOTAL_DURATION - outroStart;
+
+      let mainA = 1.0;
+      if (totalElapsedTime > outroStart) {
+        const p = (totalElapsedTime - outroStart) / outroDur;
+        mainA = 1.0 - ease(Math.min(p, 1));
+      }
+
+      // Bakgrunn uten zoom – bare cover og fade mellom bilder
+      btx.save();
+      btx.globalAlpha = mainA;
+      if (loadedImages.length) {
+        if (timeSinceLastSwitch >= SLIDE_DURATION) {
+          const over = timeSinceLastSwitch - SLIDE_DURATION;
+          currentImageIndex = (currentImageIndex + 1) % loadedImages.length;
+          timeSinceLastSwitch = over;
+        }
+        const prev = (currentImageIndex - 1 + loadedImages.length) % loadedImages.length;
+        drawImageCover(btx, loadedImages[prev], BASE_W, BASE_H);
+        if (timeSinceLastSwitch < FADE_DURATION) {
+          btx.globalAlpha = (timeSinceLastSwitch / FADE_DURATION) * mainA;
+          drawImageCover(btx, loadedImages[currentImageIndex], BASE_W, BASE_H);
+        } else {
+          drawImageCover(btx, loadedImages[currentImageIndex], BASE_W, BASE_H);
+        }
+      } else {
+        btx.fillStyle = '#1a202c';
+        btx.fillRect(0,0,BASE_W,BASE_H);
+      }
+      btx.restore();
+
+      // Innhold
+      btx.save();
+      btx.globalAlpha = mainA;
+      drawContent(btx, totalElapsedTime);
+      btx.restore();
+
+      // Sikker 4:5-ramme i 9:16
+      if (adData.safe45 && adData.aspect === '9:16') {
+        const { sx, sy, sw, sh } = cropRectForAspect('4:5');
+        btx.save();
+        btx.setLineDash([12,8]);
+        btx.lineWidth = 3;
+        btx.strokeStyle = 'rgba(237,189,242,0.9)';
+        btx.strokeRect(sx, sy, sw, sh);
+        btx.restore();
+      }
+
+      // Outro / logo
+      if (totalElapsedTime > outroStart) {
+        const p = (totalElapsedTime - outroStart) / outroDur;
+        btx.globalAlpha = ease(Math.min(p, 1));
+        btx.fillStyle = '#262830';
+        btx.fillRect(0,0,BASE_W,BASE_H);
+        if (loadedLogo) {
+          const h = 150;
+          const w = (loadedLogo.width / loadedLogo.height) * h;
+          btx.drawImage(loadedLogo, BASE_W/2 - w/2, BASE_H/2 - h/2, w, h);
+        }
+      }
+    }
+
+    function aspectDims(aspect){
+      if(aspect==='9:16') return {w:720,h:1280};
+      if(aspect==='4:5')  return {w:720,h:900};
+      return {w:720,h:1280};
+    }
+
+    function cropRectForAspect(aspect){
+      const targetAspect = (aspect==='9:16') ? (9/16) : (aspect==='4:5') ? (4/5) : (9/16);
+      const baseAspect = BASE_W / BASE_H;
+      if(targetAspect > baseAspect){
+        const cropH = Math.round(BASE_W / targetAspect);
+        const sy = Math.round((BASE_H - cropH)/2);
+        return {sx:0, sy, sw:BASE_W, sh:cropH};
+      } else if(targetAspect < baseAspect){
+        const cropW = Math.round(BASE_H * targetAspect);
+        const sx = Math.round((BASE_W - cropW)/2);
+        return {sx, sy:0, sw:cropW, sh:BASE_H};
+      }
+      return {sx:0, sy:0, sw:BASE_W, sh:BASE_H};
+    }
+
+    function renderPreview(ts){
+      if(!lastFrameTime) lastFrameTime=ts;
+      const dt=ts-lastFrameTime; lastFrameTime=ts;
+      if(isPlaying||isGenerating){ timeSinceLastSwitch+=dt; totalElapsedTime+=dt; }
+
+      drawBaseFrame();
+
+      const a=adData.aspect||'9:16'; const {w:ow,h:oh}=aspectDims(a);
+      if(previewCanvas.width!==ow) previewCanvas.width=ow;
+      if(previewCanvas.height!==oh) previewCanvas.height=oh;
+
+      const {sx,sy,sw,sh} = cropRectForAspect(a);
+      ptx.setTransform(1,0,0,1,0,0);
+      ptx.clearRect(0,0,ow,oh);
+      ptx.fillStyle='#000'; ptx.fillRect(0,0,ow,oh);
+      ptx.drawImage(baseCanvas, sx,sy,sw,sh, 0,0, ow,oh);
+
+      requestAnimationFrame(renderPreview);
+    }
+
+    previewBtn.onclick=()=>{
+      isPlaying=!isPlaying;
+      previewBtn.textContent=isPlaying?'Pause':'Forhåndsvisning';
+      if(isPlaying){ totalElapsedTime=0; timeSinceLastSwitch=0; currentImageIndex=0; if(musicUrl){ audio.currentTime=0; audio.play(); } }
+      else { if(musicUrl) audio.pause(); }
+    };
+
+    function pickMime(){ const c=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','']; for(const m of c){ try{ if(!m) return ''; if(MediaRecorder.isTypeSupported(m)) return m; }catch(e){} } return ''; }
+
+    function generateVideo(){
+      if(!loadedImages.length){ statusEl.textContent='Last opp bilder først.'; setTimeout(()=>statusEl.textContent='',2500); return; }
+      const res = (adData.resolution==='1080')?1.5:1;
+      const a=adData.aspect||'9:16'; const {w:ow0,h:oh0}=aspectDims(a);
+      const ow=Math.round(ow0*res), oh=Math.round(oh0*res);
+
+      isGenerating=true; isPlaying=false; previewBtn.disabled=true; generateBtn.disabled=true;
+      statusEl.textContent=`Eksporterer i ${ow}×${oh}…`;
+
+      const out=document.createElement('canvas'); out.width=ow; out.height=oh;
+      const octx=out.getContext('2d'); octx.imageSmoothingEnabled=true; octx.imageSmoothingQuality='high';
+
+      const stream=out.captureStream(60);
+      const mime=pickMime(); let opts=mime?{mimeType:mime,videoBitsPerSecond:20000000}:{videoBitsPerSecond:20000000};
+      try{ mediaRecorder=new MediaRecorder(stream,opts); }catch(e){ statusEl.textContent='Opptak ikke støttet i denne nettleseren.'; isGenerating=false; previewBtn.disabled=false; generateBtn.disabled=false; return; }
+
+      recordedChunks=[];
+      mediaRecorder.ondataavailable=e=>{ if(e.data.size>0) recordedChunks.push(e.data); };
+      mediaRecorder.onstop=()=>{
+        const blob=new Blob(recordedChunks,{type:'video/webm'});
+        downloadLink.href=URL.createObjectURL(blob);
+        downloadLink.download=`eiendomsannonse-${(adData.addressStreet||'adresse').replace(/\s+/g,'_')}.webm`;
+        downloadLink.classList.remove('hidden');
+        statusEl.textContent=`Video klar (${ow}×${oh}).`;
+        isGenerating=false; previewBtn.disabled=false; generateBtn.disabled=false;
+        if(musicUrl){ audio.pause(); audio.currentTime=0; }
+      };
+
+      currentImageIndex=0; timeSinceLastSwitch=0; totalElapsedTime=0; lastFrameTime=0;
+      if(musicUrl){ audio.currentTime=0; audio.play(); }
+      mediaRecorder.start();
+
+      function step(now){
+        const dt=now-(lastFrameTime||now); lastFrameTime=now; totalElapsedTime+=dt;
+        drawBaseFrame();
+        const {sx,sy,sw,sh} = cropRectForAspect(a);
+        octx.setTransform(1,0,0,1,0,0);
+        octx.fillStyle='#000'; octx.fillRect(0,0,ow,oh);
+        octx.drawImage(baseCanvas, sx,sy,sw,sh, 0,0, ow,oh);
+
+        if(totalElapsedTime<TOTAL_DURATION) requestAnimationFrame(step);
+        else { mediaRecorder.stop(); }
+      }
+      requestAnimationFrame(step);
+    }
+    generateBtn.onclick=()=>{ if(!isGenerating) generateVideo(); };
+
+    async function init(){ 
+      updateAdData();
+      await waitFonts(); 
+      requestAnimationFrame(renderPreview); 
+    }
+    init();
+  </script>
+</body>
+</html>
+
